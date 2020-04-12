@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29920.165
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HangfireScheduler", "HangfireScheduler\HangfireScheduler.csproj", "{4B6F6841-763D-4AA3-BF44-9B7820E85B7B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4B6F6841-763D-4AA3-BF44-9B7820E85B7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B6F6841-763D-4AA3-BF44-9B7820E85B7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B6F6841-763D-4AA3-BF44-9B7820E85B7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B6F6841-763D-4AA3-BF44-9B7820E85B7B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {11A68726-DF6F-4B28-9103-BD73029F43DB}
+	EndGlobalSection
+EndGlobal
