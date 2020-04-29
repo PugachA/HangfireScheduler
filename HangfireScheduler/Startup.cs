@@ -12,6 +12,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Hangfire;
 using Hangfire.SqlServer;
+using Hangfire.Common;
+using RestSharp;
+using System.Threading;
+using System.Linq.Expressions;
+using System.Net.Http;
 
 namespace HangfireScheduler
 {
@@ -42,8 +47,10 @@ namespace HangfireScheduler
                     UseRecommendedIsolationLevel = true,
                     UsePageLocksOnDequeue = true,
                     DisableGlobalLocks = true,
+                    
                 })
                 .WithJobExpirationTimeout(TimeSpan.FromDays(365))
+                .UseFilter(new AutomaticRetryAttribute { Attempts = 0 })
                 );
 
             // Add the processing server as IHostedService
@@ -51,7 +58,7 @@ namespace HangfireScheduler
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IBackgroundJobClient backgroundJobs, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IRecurringJobManager backgroundJobs, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -59,7 +66,14 @@ namespace HangfireScheduler
             }
 
             app.UseHangfireDashboard();
-            backgroundJobs.Enqueue(() => Console.WriteLine("Hello world from Hangfire!"));
+
+            var restClient = new RestClient();
+            var request = new RestRequest(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=1");
+
+            RecurringJob.AddOrUpdate(() => Method(), Cron.Minutely, TimeZoneInfo.Local);
+
+            //var manager = new RecurringJobManager();
+            //manager.AddOrUpdate("some-id", Job.FromExpression(() => Method()), Cron.Yearly());
 
             app.UseHttpsRedirection();
 
@@ -71,6 +85,18 @@ namespace HangfireScheduler
             {
                 endpoints.MapControllers();
             });
+        }
+
+        [AutomaticRetry(Attempts = 0)]
+        public async Task Method()
+        {
+            var restClient = new RestClient();
+            var request = new RestRequest(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=1");
+
+            var response = await restClient.ExecuteGetAsync(request);
+
+            if (!response.IsSuccessful)
+                throw new HttpRequestException("Запрос бы не успешен");
         }
     }
 }
