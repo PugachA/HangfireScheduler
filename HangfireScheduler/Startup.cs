@@ -47,7 +47,7 @@ namespace HangfireScheduler
                     UseRecommendedIsolationLevel = true,
                     UsePageLocksOnDequeue = true,
                     DisableGlobalLocks = true,
-                    
+
                 })
                 .WithJobExpirationTimeout(TimeSpan.FromDays(365))
                 .UseFilter(new AutomaticRetryAttribute { Attempts = 0 })
@@ -67,13 +67,8 @@ namespace HangfireScheduler
 
             app.UseHangfireDashboard();
 
-            var restClient = new RestClient();
-            var request = new RestRequest(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=1");
-
-            RecurringJob.AddOrUpdate(() => Method(), Cron.Minutely, TimeZoneInfo.Local);
-
-            //var manager = new RecurringJobManager();
-            //manager.AddOrUpdate("some-id", Job.FromExpression(() => Method()), Cron.Yearly());
+            RecurringJob.AddOrUpdate(() => Console.WriteLine("Hello"), Cron.Minutely, TimeZoneInfo.Local);
+            //RecurringJob.AddOrUpdate(() => Method(), Cron.Hourly, TimeZoneInfo.Local);
 
             app.UseHttpsRedirection();
 
@@ -91,9 +86,9 @@ namespace HangfireScheduler
         public async Task Method()
         {
             var restClient = new RestClient();
-            var request = new RestRequest(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=1");
+            var request = new RestRequest(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=2");
 
-            var response = await restClient.ExecuteGetAsync(request);
+            var response = await restClient.ExecutePostAsync(request);
 
             if (!response.IsSuccessful)
                 throw new HttpRequestException("Запрос бы не успешен");
