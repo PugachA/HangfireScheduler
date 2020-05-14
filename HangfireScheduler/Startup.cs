@@ -23,17 +23,23 @@ namespace HangfireScheduler
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-
         public IConfiguration Configuration { get; }
+
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
+        {
+            var builder = new ConfigurationBuilder()
+                .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appSettings.{env.EnvironmentName}.json", optional: true)
+                .AddConfiguration(configuration);
+
+            Configuration = builder.Build();
+        }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddTransient(provider => Configuration);
 
             // Add Hangfire services.
             services.AddHangfire(configuration => configuration
