@@ -89,7 +89,7 @@ namespace HangfireScheduler.Controllers
 
             if (recurrentJob == null)
             {
-                _logger.LogError($"Не найдено задачь c id={recurringJobId}");
+                _logger.LogError($"Не найдено задач c id={recurringJobId}");
                 return NotFound();
             }
 
