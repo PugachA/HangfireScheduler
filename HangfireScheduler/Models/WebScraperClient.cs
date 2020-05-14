@@ -1,5 +1,6 @@
 ﻿using Hangfire;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using RestSharp;
 using System;
 using System.Net.Http;
@@ -10,13 +11,17 @@ namespace HangfireScheduler.Models
     public class WebScraperClient
     {
         private readonly IRestClient _restClient;
-        //private readonly ILogger _logger;
+        private readonly ILogger<WebScraperClient> _logger;
 
-        public WebScraperClient(IConfiguration configuration)
+        public WebScraperClient(IConfiguration configuration, ILogger<WebScraperClient> logger)
         {
             if (configuration == null)
                 throw new ArgumentNullException($"Значение {nameof(configuration)} не может быть null");
 
+            if (logger == null)
+                throw new ArgumentNullException($"Значение {nameof(logger)} не может быть null");
+
+            _logger = logger;
             var webScraperUri = new Uri(configuration.GetValue<string>("WebScraperUri"));
             _restClient = new RestClient(webScraperUri);
         }
@@ -30,9 +35,11 @@ namespace HangfireScheduler.Models
 
             if (!response.IsSuccessful)
             {
-                //_logger.LogError($"Не удалось получить информацию от MvcPaySystemAdmins {response.ErrorMessage} {response.ErrorException}");
+                _logger.LogError($"Не удалось отправить запрос {response.ErrorMessage} {response.ErrorException}");
                 throw new HttpRequestException($"Не удалось отправить запрос {response.ErrorMessage} {response.ErrorException}");
             }
+
+            _logger.LogInformation($"Успешно отправлен запрос {response.ResponseUri}");
         }
 
         [AutomaticRetry(Attempts = 0)]
@@ -44,9 +51,11 @@ namespace HangfireScheduler.Models
 
             if (!response.IsSuccessful)
             {
-                //_logger.LogError($"Не удалось получить информацию от MvcPaySystemAdmins {response.ErrorMessage} {response.ErrorException}");
+                _logger.LogError($"Не удалось отправить запрос {response.ErrorMessage} {response.ErrorException}");
                 throw new HttpRequestException($"Не удалось отправить запрос {response.ErrorMessage} {response.ErrorException}");
             }
+
+            _logger.LogInformation($"Успешно отправлен запрос {response.ResponseUri}");
         }
     }
 }
