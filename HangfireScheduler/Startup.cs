@@ -18,6 +18,7 @@ using System.Threading;
 using System.Linq.Expressions;
 using System.Net.Http;
 using Hangfire.Storage;
+using HangfireScheduler.Models;
 
 namespace HangfireScheduler
 {
@@ -39,7 +40,9 @@ namespace HangfireScheduler
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
             services.AddTransient(provider => Configuration);
+            services.AddTransient<WebScraperClient>();
 
             // Add Hangfire services.
             services.AddHangfire(configuration => configuration
