@@ -19,6 +19,9 @@ using System.Linq.Expressions;
 using System.Net.Http;
 using Hangfire.Storage;
 using HangfireScheduler.Models;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
+using System.IO;
 
 namespace HangfireScheduler
 {
@@ -65,6 +68,16 @@ namespace HangfireScheduler
 
             // Add the processing server as IHostedService
             services.AddHangfireServer();
+
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "Hangfire Scheduler", Version = "v1" });
+
+                // Set the comments path for the Swagger JSON and UI.
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                options.IncludeXmlComments(xmlPath);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -76,6 +89,13 @@ namespace HangfireScheduler
             }
 
             app.UseHangfireDashboard();
+
+            app.UseSwagger();
+
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint($"./v1/swagger.json", "Hangfire Scheduler API");
+            });
 
             //var manager = new RecurringJobManager();
 
