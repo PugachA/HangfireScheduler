@@ -17,6 +17,7 @@ using RestSharp;
 using System.Threading;
 using System.Linq.Expressions;
 using System.Net.Http;
+using Hangfire.Storage;
 
 namespace HangfireScheduler
 {
@@ -67,8 +68,10 @@ namespace HangfireScheduler
 
             app.UseHangfireDashboard();
 
-            RecurringJob.AddOrUpdate(() => Console.WriteLine("Hello"), Cron.Minutely, TimeZoneInfo.Local);
-            //RecurringJob.AddOrUpdate(() => Method(), Cron.Hourly, TimeZoneInfo.Local);
+            //var manager = new RecurringJobManager();
+
+            //RecurringJob.AddOrUpdate("Beru1", () => Method(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=1"), "0 30 * ? * *", TimeZoneInfo.Local);
+            //RecurringJob.AddOrUpdate("Beru2", () => Method(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=2"), "0 0 * ? * *", TimeZoneInfo.Local);
 
             app.UseHttpsRedirection();
 
@@ -83,10 +86,10 @@ namespace HangfireScheduler
         }
 
         [AutomaticRetry(Attempts = 0)]
-        public async Task Method()
+        public async Task Method(string requestUrl)
         {
             var restClient = new RestClient();
-            var request = new RestRequest(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=2");
+            var request = new RestRequest(requestUrl);
 
             var response = await restClient.ExecutePostAsync(request);
 
