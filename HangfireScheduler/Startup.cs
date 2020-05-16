@@ -15,6 +15,9 @@ using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.IO;
 using NLog.Extensions.Logging;
+using Hangfire.Dashboard.BasicAuthorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 
 namespace HangfireScheduler
 {
@@ -41,6 +44,9 @@ namespace HangfireScheduler
 
             services.AddTransient(provider => Configuration);
             services.AddTransient<WebScraperClient>();
+
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
 
             // Add Hangfire services.
             services.AddHangfire(configuration => configuration
@@ -76,14 +82,35 @@ namespace HangfireScheduler
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHttpContextAccessor test)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHangfireDashboard();
+            app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseAuthentication();
+
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                AppPath = "./swagger",
+                Authorization = new[] { new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
+                {
+                    RequireSsl = false,
+                    SslRedirect = false,
+                    LoginCaseSensitive = true,
+                    Users = new []
+                    {
+                        new BasicAuthAuthorizationUser
+                        {
+                            Login = "Admin",
+                            PasswordClear =  "Dub123456"
+                        }
+                    }
+                })}
+            });
 
             app.UseSwagger();
 
@@ -92,28 +119,10 @@ namespace HangfireScheduler
                 c.SwaggerEndpoint($"./v1/swagger.json", "Hangfire Scheduler API");
             });
 
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
-        }
-
-        [AutomaticRetry(Attempts = 0)]
-        public async Task Method(string requestUrl)
-        {
-            var restClient = new RestClient();
-            var request = new RestRequest(requestUrl);
-
-            var response = await restClient.ExecutePostAsync(request);
-
-            if (!response.IsSuccessful)
-                throw new HttpRequestException("Запрос бы не успешен");
         }
     }
 }
