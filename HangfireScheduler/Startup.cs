@@ -1,23 +1,15 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Hangfire;
 using Hangfire.SqlServer;
-using Hangfire.Common;
 using RestSharp;
-using System.Threading;
-using System.Linq.Expressions;
 using System.Net.Http;
-using Hangfire.Storage;
 using HangfireScheduler.Models;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -84,7 +76,7 @@ namespace HangfireScheduler
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IRecurringJobManager backgroundJobs, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -99,11 +91,6 @@ namespace HangfireScheduler
             {
                 c.SwaggerEndpoint($"./v1/swagger.json", "Hangfire Scheduler API");
             });
-
-            //var manager = new RecurringJobManager();
-
-            //RecurringJob.AddOrUpdate("Beru1", () => Method(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=1"), "0 30 * ? * *", TimeZoneInfo.Local);
-            //RecurringJob.AddOrUpdate("Beru2", () => Method(@"http://pugachserver/WebScraper/api/ProductWatcher/price?productId=2"), "0 0 * ? * *", TimeZoneInfo.Local);
 
             app.UseHttpsRedirection();
 
