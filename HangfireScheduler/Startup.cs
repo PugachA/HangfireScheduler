@@ -95,7 +95,7 @@ namespace HangfireScheduler
 
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
-                AppPath = "./swagger",
+                AppPath = "../swagger",
                 Authorization = new[] { new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
                 {
                     RequireSsl = false,

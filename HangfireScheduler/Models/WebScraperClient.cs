@@ -35,8 +35,8 @@ namespace HangfireScheduler.Models
 
             if (!response.IsSuccessful)
             {
-                _logger.LogError($"Не удалось отправить запрос {response.ErrorMessage} {response.ErrorException}");
-                throw new HttpRequestException($"Не удалось отправить запрос {response.ErrorMessage} {response.ErrorException}");
+                _logger.LogError($"Не удалось отправить запрос {response.Request} {response.ErrorMessage} {response.ErrorException}");
+                throw new HttpRequestException($"Не удалось отправить запрос {response.Request} {response.ErrorMessage} {response.ErrorException}");
             }
 
             _logger.LogInformation($"Успешно отправлен запрос {response.ResponseUri}");
