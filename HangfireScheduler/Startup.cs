@@ -30,6 +30,7 @@ namespace HangfireScheduler
             var builder = new ConfigurationBuilder()
                 .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appSettings.{env.EnvironmentName}.json", optional: true)
+                .AddJsonFile($"programsSettings.json", optional: false, reloadOnChange: true)
                 .AddConfiguration(configuration);
 
             Configuration = builder.Build();
