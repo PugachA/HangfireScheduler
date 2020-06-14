@@ -1,62 +1,69 @@
-﻿using HangfireScheduler.DTO;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace HangfireScheduler.Models
 {
-    public class ProgramRepository : IDisposable
+    public class ProgramRepository : IDisposable, IRepository<ProgramSettings>
     {
         private readonly Mutex _mutex;
-        private readonly Dictionary<string, ProgramDto> _nameProgramDictionary;
+        private readonly Dictionary<string, ProgramSettings> _nameProgramDictionary;
         private readonly string _programsSettingsPath;
+
         public ProgramRepository(IConfiguration configuration)
         {
             _mutex = new Mutex();
             _programsSettingsPath = Path.Combine(AppContext.BaseDirectory, "programsSettings.json");
 
             if (!File.Exists(_programsSettingsPath))
-                throw new FileNotFoundException($"File {_programsSettingsPath} not find");
+                throw new FileNotFoundException($"File {_programsSettingsPath} not found");
 
-            var programDtoList = configuration.GetSection("Programs").Get<List<ProgramDto>>();
-            _nameProgramDictionary = ConvertToDictionary(programDtoList);
+            var programSettingsList = configuration.GetSection("Programs").Get<List<ProgramSettings>>();
+            _nameProgramDictionary = ConvertToDictionary(programSettingsList);
         }
 
-        private Dictionary<string, ProgramDto> ConvertToDictionary(List<ProgramDto> programDtoList)
+        private Dictionary<string, ProgramSettings> ConvertToDictionary(List<ProgramSettings> programSettingsList)
         {
-            if (programDtoList == null)
-                throw new ArgumentNullException($"Argument {nameof(programDtoList)} can not be null");
+            if (programSettingsList == null)
+                throw new ArgumentNullException($"Argument {nameof(programSettingsList)} can not be null");
 
-            if (!programDtoList.Any())
-                throw new ArgumentException($"Argument {nameof(programDtoList)} can not be empty");
+            if (!programSettingsList.Any())
+                throw new ArgumentException($"Argument {nameof(programSettingsList)} can not be empty");
 
-            var nameProgramDictionary = new Dictionary<string, ProgramDto>(StringComparer.OrdinalIgnoreCase);
-            foreach (var programDto in programDtoList)
+            var nameProgramDictionary = new Dictionary<string, ProgramSettings>(StringComparer.OrdinalIgnoreCase);
+            foreach (var programSettings in programSettingsList)
             {
-                if (nameProgramDictionary.ContainsKey(programDto.Name))
-                    throw new ArgumentException($"Record with the key {programDto.Name} is already there. {nameof(programDto.Name)} must be unique");
+                if (nameProgramDictionary.ContainsKey(programSettings.Name))
+                    throw new ArgumentException($"Record with the key {programSettings.Name} is already there. {nameof(programSettings.Name)} must be unique");
 
-                nameProgramDictionary.Add(programDto.Name, programDto);
+                nameProgramDictionary.Add(programSettings.Name, programSettings);
             }
 
             return nameProgramDictionary;
         }
 
-        public void AddOrUpdate(ProgramDto programDto)
+        public ProgramSettings Get(string name)
+        {
+            if (!_nameProgramDictionary.TryGetValue(name, out ProgramSettings value))
+                throw new KeyNotFoundException($"{nameof(ProgramSettings)} not found by key {name}");
+
+            return value;
+        }
+
+        public void AddOrUpdate(ProgramSettings programSettings)
         {
             try
             {
                 _mutex.WaitOne();
 
-                if (_nameProgramDictionary.ContainsKey(programDto.Name))
-                    _nameProgramDictionary[programDto.Name] = programDto;
+                if (_nameProgramDictionary.ContainsKey(programSettings.Name))
+                    _nameProgramDictionary[programSettings.Name] = programSettings;
                 else
-                    _nameProgramDictionary.Add(programDto.Name, programDto);
+                    _nameProgramDictionary.Add(programSettings.Name, programSettings);
 
                 var programDtoList = _nameProgramDictionary.Values.AsEnumerable();
 

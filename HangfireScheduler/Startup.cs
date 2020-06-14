@@ -23,7 +23,7 @@ namespace HangfireScheduler
 {
     public class Startup
     {
-        public IConfiguration Configuration { get; }
+        private readonly IConfiguration _configuration;
 
         public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
@@ -33,9 +33,9 @@ namespace HangfireScheduler
                 .AddJsonFile($"programsSettings.json", optional: false, reloadOnChange: true)
                 .AddConfiguration(configuration);
 
-            Configuration = builder.Build();
+            _configuration = builder.Build();
 
-            NLog.LogManager.Configuration = new NLogLoggingConfiguration(Configuration.GetSection("NLog"));
+            NLog.LogManager.Configuration = new NLogLoggingConfiguration(_configuration.GetSection("NLog"));
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -43,10 +43,11 @@ namespace HangfireScheduler
         {
             services.AddControllers();
 
-            services.AddTransient(provider => Configuration);
+            services.AddTransient(provider => _configuration);
             services.AddTransient<WebScraperClient>();
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<ProgramRepository>();
 
 
             // Add Hangfire services.
@@ -54,7 +55,7 @@ namespace HangfireScheduler
                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
                 .UseSimpleAssemblyNameTypeSerializer()
                 .UseRecommendedSerializerSettings()
-                .UseSqlServerStorage(Configuration.GetConnectionString("HangfireConnection"), new SqlServerStorageOptions
+                .UseSqlServerStorage(_configuration.GetConnectionString("HangfireConnection"), new SqlServerStorageOptions
                 {
                     CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
                     SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),

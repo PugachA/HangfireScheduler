@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.Storage;
 using HangfireScheduler.DTO;
+using HangfireScheduler.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -18,11 +19,13 @@ namespace HangfireScheduler.Controllers
     public class ProgramSchedulerController : ControllerBase
     {
         private readonly IRecurringJobManager _recurringJobManager;
+        private readonly ProgramRepository _programRepository;
         private readonly ILogger<ProgramSchedulerController> _logger;
 
-        public ProgramSchedulerController(IRecurringJobManager recurringJobManager, ILogger<ProgramSchedulerController> logger)
+        public ProgramSchedulerController(ProgramRepository programRepository, IRecurringJobManager recurringJobManager, ILogger<ProgramSchedulerController> logger)
         {
             _recurringJobManager = recurringJobManager;
+            _programRepository = programRepository;
             _logger = logger;
         }
 
@@ -101,11 +104,15 @@ namespace HangfireScheduler.Controllers
             if (startJob == null)
                 throw new ArgumentNullException($"Argument {nameof(startJob)} can not be null");
 
-            return new ProgramDto 
-            { 
-                Name = ExtractProgramName(startJob.Id),
-                Path = 
-            }
+            var name = ExtractProgramName(startJob.Id);
+
+            return new ProgramDto
+            {
+                Name = name,
+                Path = _programRepository.GetProgramSettings(name).Path,
+                StartScheduler = startJob.Cron,
+                StopScheduler = stopJob.Cron
+            };
         }
 
         private string ExtractProgramName(string startJobId)
@@ -119,6 +126,5 @@ namespace HangfireScheduler.Controllers
 
             return match.Groups[1].Value;
         }
-
     }
 }
