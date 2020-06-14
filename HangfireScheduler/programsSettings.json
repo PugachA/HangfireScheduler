@@ -1,8 +1,9 @@
 {
   "Programs": [
     {
-      "Name": null,
-      "Path": null
+      "Name": "Notepad++",
+      "UserName": "WebScraper",
+      "Path": "C:\\Program Files\\Notepad++\\notepad++.exe"
     }
   ]
 }

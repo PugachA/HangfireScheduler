@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Controllers\ProgramSchedulerController.cs~RFa1ae61.TMP" />
     <None Remove="HangfireScheduler.xml" />
   </ItemGroup>
 

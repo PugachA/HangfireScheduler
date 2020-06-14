@@ -31,6 +31,7 @@ namespace HangfireScheduler
                 .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appSettings.{env.EnvironmentName}.json", optional: true)
                 .AddJsonFile($"programsSettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"users.json", optional: false, reloadOnChange: true)
                 .AddConfiguration(configuration);
 
             _configuration = builder.Build();
@@ -48,6 +49,7 @@ namespace HangfireScheduler
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddSingleton<ProgramRepository>();
+            services.AddSingleton<UserRepository>();
 
 
             // Add Hangfire services.

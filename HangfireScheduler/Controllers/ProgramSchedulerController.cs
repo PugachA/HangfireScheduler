@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Security;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Hangfire;
@@ -20,18 +24,20 @@ namespace HangfireScheduler.Controllers
     {
         private readonly IRecurringJobManager _recurringJobManager;
         private readonly ProgramRepository _programRepository;
+        private readonly UserRepository _userRepository;
         private readonly ILogger<ProgramSchedulerController> _logger;
 
-        public ProgramSchedulerController(ProgramRepository programRepository, IRecurringJobManager recurringJobManager, ILogger<ProgramSchedulerController> logger)
+        public ProgramSchedulerController(ProgramRepository programRepository, UserRepository userRepository, IRecurringJobManager recurringJobManager, ILogger<ProgramSchedulerController> logger)
         {
             _recurringJobManager = recurringJobManager;
             _programRepository = programRepository;
+            _userRepository = userRepository;
             _logger = logger;
         }
 
         // GET: api/<ProgrammSchedulerController>
         [HttpGet]
-        public IEnumerable<ProgramDto> GetAllProgramJobs()
+        public ActionResult<IEnumerable<ProgramDto>> GetAllProgramJobs()
         {
             _logger.LogInformation($"Поступил запрос на получение всех задач");
 
@@ -44,24 +50,17 @@ namespace HangfireScheduler.Controllers
             var programDtoList = new List<ProgramDto>();
             foreach (var startJob in startProgramRecurrentJobs)
             {
-                var programName = 
                 var stopJob = stopProgramRecurrentJobs.SingleOrDefault(s => s.Id == startJob.Id.Replace("-Start", "-Stop"));
 
                 programDtoList.Add(ConvertToProgramDto(startJob, stopJob));
             }
 
-        }
-
-        // GET api/<ProgrammSchedulerController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
+            return Ok(programDtoList);
         }
 
         // POST api/<ProgrammSchedulerController>
         [HttpPost]
-        public async Task<IActionResult> CreateOrUpdateProgramJob([FromBody] ProgramDto productScheduler)
+        public async Task<IActionResult> CreateOrUpdateProgramJob([FromBody] ProgramDto programDto)
         {
             if (!ModelState.IsValid)
             {
@@ -69,19 +68,25 @@ namespace HangfireScheduler.Controllers
                 return BadRequest(ModelState);
             }
 
-            _logger.LogInformation($"Поступил запрос на добавления расписания для продукта {JsonSerializer.Serialize(productScheduler)}");
+            _logger.LogInformation($"Поступил запрос на добавление программы {JsonSerializer.Serialize(programDto)}");
 
-            foreach (var scheduler in productScheduler.Scheduler)
-            {
-                string id = $"{productScheduler.ProductId}-{scheduler}";
-                _recurringJobManager.AddOrUpdate(
-                    id,
-                    () => _webScraperClient.PostProductPrice(productScheduler.ProductId),
-                    scheduler,
+            var user = _userRepository.Get(programDto.UserName);
+
+            var password = new NetworkCredential("", "Dub123456").SecurePassword;
+
+            string startId = $"Program-{programDto.Name}-Start";
+            _recurringJobManager.AddOrUpdate(
+                    startId,
+                    () => Process.Start("C:\\Program Files\\Notepad++\\notepad++.exe", "WebScraper", password, "DESKTOP-Q3JCQH4"),
+                    programDto.StartScheduler,
                     TimeZoneInfo.Local);
 
-                _logger.LogInformation($"Задача c id={id} успешно добавлена");
-            }
+            string stopId = $"Program-{programDto.Name}-Stop";
+            _recurringJobManager.AddOrUpdate(
+                    stopId,
+                    () => (new Test()).StopProgram(programDto.Name),
+                    programDto.StopScheduler,
+                    TimeZoneInfo.Local);
 
             return Ok();
         }
@@ -105,11 +110,13 @@ namespace HangfireScheduler.Controllers
                 throw new ArgumentNullException($"Argument {nameof(startJob)} can not be null");
 
             var name = ExtractProgramName(startJob.Id);
+            var programSettings = _programRepository.Get(name);
 
             return new ProgramDto
             {
                 Name = name,
-                Path = _programRepository.GetProgramSettings(name).Path,
+                Path = programSettings.Path,
+                UserName = programSettings.UserName,
                 StartScheduler = startJob.Cron,
                 StopScheduler = stopJob.Cron
             };
@@ -125,6 +132,19 @@ namespace HangfireScheduler.Controllers
                 throw new ArgumentException($"Incorrect number of groups {match.Groups.Count} found for id={startJobId}. Valid regex {nameRegex}");
 
             return match.Groups[1].Value;
+        }
+
+        private SecureString ConvertToSecureString(string password)
+        {
+            if (password == null)
+                throw new ArgumentNullException("password");
+
+            var securePassword = new SecureString();
+
+            foreach (char c in password)
+                securePassword.AppendChar(c);
+
+            return securePassword;
         }
     }
 }
