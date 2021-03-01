@@ -24,8 +24,8 @@ namespace HangfireScheduler.Models
                 throw new ArgumentNullException($"Значение {nameof(logger)} не может быть null");
 
             _logger = logger;
-            var webScraperUri = new Uri(configuration.GetValue<string>("WebScraperUri"));
-            _restClient = new RestClient(webScraperUri);
+            var miningHunterUrl = new Uri(configuration.GetValue<string>("MiningHunterUrl"));
+            _restClient = new RestClient(miningHunterUrl);
             _restClient.Timeout = 300000;
         }
 
