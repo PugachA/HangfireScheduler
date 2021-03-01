@@ -20,17 +20,42 @@ namespace HangfireScheduler.Controllers
     {
         private readonly IRecurringJobManager _recurringJobManager;
         private readonly WebScraperClient _webScraperClient;
+        private readonly MiningClient _miningClient;
         private readonly ILogger<HangfireSchedulerController> _logger;
 
-        public HangfireSchedulerController(IRecurringJobManager recurringJobManager, WebScraperClient webScraperClient, ILogger<HangfireSchedulerController> logger)
+        public HangfireSchedulerController(IRecurringJobManager recurringJobManager, WebScraperClient webScraperClient, MiningClient miningClient, ILogger<HangfireSchedulerController> logger)
         {
             _recurringJobManager = recurringJobManager;
             _webScraperClient = webScraperClient;
+            _miningClient = miningClient;
             _logger = logger;
         }
 
+        [HttpPost("MiningHunterJobs")]
+        public async Task<IActionResult> CreateOrUpdateMiningHunterJobDto([FromBody] MiningHunterJobDto miningHunterJobDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                _logger.LogError($"Валидация модели не успешна {ModelState}");
+                return BadRequest(ModelState);
+            }
+
+            _logger.LogInformation($"Поступил запрос на добавления расписания для оборудования {JsonSerializer.Serialize(miningHunterJobDto)}");
+
+            string id = $"mining-{miningHunterJobDto.EquipmentId}";
+            _recurringJobManager.AddOrUpdate(
+                id,
+                () => _miningClient.PostEquipment(miningHunterJobDto.EquipmentId),
+                miningHunterJobDto.Scheduler,
+                TimeZoneInfo.Local);
+
+            _logger.LogInformation($"Задача c id={id} успешно добавлена");
+
+            return Ok();
+        }
+
         [HttpPost("Products")]
-        public async Task<IActionResult> CreateOrUpdateProductScheduler([FromBody]ProductSchedulerDto productScheduler)
+        public async Task<IActionResult> CreateOrUpdateProductScheduler([FromBody] ProductSchedulerDto productScheduler)
         {
             if (!ModelState.IsValid)
             {

@@ -44,6 +44,7 @@ namespace HangfireScheduler
 
             services.AddTransient(provider => Configuration);
             services.AddTransient<WebScraperClient>();
+            services.AddTransient<MiningClient>();
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
@@ -55,8 +56,8 @@ namespace HangfireScheduler
                 .UseRecommendedSerializerSettings()
                 .UseSqlServerStorage(Configuration.GetConnectionString("HangfireConnection"), new SqlServerStorageOptions
                 {
-                    CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-                    SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+                    CommandBatchMaxTimeout = TimeSpan.FromMinutes(7),
+                    SlidingInvisibilityTimeout = TimeSpan.FromMinutes(7),
                     QueuePollInterval = TimeSpan.Zero,
                     UseRecommendedIsolationLevel = true,
                     UsePageLocksOnDequeue = true,
