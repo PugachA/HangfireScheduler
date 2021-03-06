@@ -34,7 +34,7 @@ namespace HangfireScheduler.Models
         {
             var request = new RestRequest($"api/MiningEquipmentHunter?equipmentId={equipmentId}");
 
-            var response = await _restClient.ExecuteGetAsync(request);
+            var response = await _restClient.ExecutePostAsync(request);
 
             if (!response.IsSuccessful)
             {
